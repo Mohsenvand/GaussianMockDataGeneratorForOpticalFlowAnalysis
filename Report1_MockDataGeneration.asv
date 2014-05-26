@@ -1,0 +1,75 @@
+clear
+close
+clc
+
+mock_frame_size = 128;
+N_out_frame =  20;
+sigma = 0.25;
+th = 30;
+move_pattern = [-4 -6];
+
+[mock_filtered, mock_sharp] = generate_gaussian_mock(mock_frame_size, move_pattern, N_out_frame, sigma, th);
+
+figure(1);
+subplot(221);
+imagesc(mock_filtered(:,:,1))
+subplot(222);
+imagesc(mock_sharp(:,:,1))
+
+subplot(223);
+imagesc(mock_filtered(:,:,2))
+subplot(224);
+imagesc(mock_sharp(:,:,2))
+
+%%
+
+outputFileName = 'mock_filtered_stack.tif';
+for k = 1:size(mock_filtered,3)
+    imwrite(mock_filtered(:,:,k),outputFileName,'WriteMode', 'append', 'Compression', 'none');
+end
+
+outputFileName = 'mock_sharp_stack.tif';
+for k = 1:size(mock_sharp,3)
+    imwrite(mock_sharp(:,:,k),outputFileName,'WriteMode', 'append', 'Compression', 'none');
+end
+
+%%
+
+im1 = mock_filtered(:,:,1);
+im2 = mock_filtered(:,:,2);
+
+figure(2);
+subplot(121);
+imshow(im1);
+subplot(122);
+imshow(im2);
+
+uv_hsOld = estimate_flow_interface(im1,im2,'hs-old');
+
+
+plotFlow(uv_hsOld(:,:,1), uv_hsOld(:,:,2), im1);
+% imshow(uint8(flowToColor(uv_hsOld)));
+
+
+%%
+uv_hs = estimate_flow_interface(im1, im2, 'hs');
+U_hs = uv_hs(:,:,1) + 1i*uv_hs(:,:,2);
+u_hs = uv_hs(:,:,1);
+v_hs = uv_hs(:,:,2);
+figure(4);
+subplot(131);
+quiver(u_hs,v_hs)
+
+uv_nl = estimate_flow_interface(im1, im2, 'classic+nl-fast');
+U_nl = uv_nl(:,:,1) + 1i*uv_nl(:,:,2);
+u_nl = uv_nl(:,:,1);
+v_nl = uv_nl(:,:,2);
+subplot(132);
+quiver(u_nl,v_nl)
+
+uv_ba = estimate_flow_interface(im1, im2, 'ba');
+U_ba = uv_ba(:,:,1) + 1i*uv_ba(:,:,2);
+u_ba = uv_ba(:,:,1);
+v_ba = uv_ba(:,:,2);
+subplot(133);
+quiver(u_ba,v_ba)
